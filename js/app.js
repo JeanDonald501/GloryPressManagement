@@ -112,17 +112,6 @@ function handleSetupSubmit() {
   const adminUsername = document.getElementById('setup-admin-username').value;
   const adminPassword = document.getElementById('setup-admin-password').value;
 
-  // Configuration Firebase optionnelle au démarrage
-  const firebaseConfigStr = document.getElementById('setup-firebase-config').value.trim();
-  if (firebaseConfigStr) {
-    try {
-      const config = JSON.parse(firebaseConfigStr);
-      db.setFirebaseConfig(config);
-    } catch(e) {
-      alert("La configuration Firebase saisie n'est pas un JSON valide. L'application démarrera en mode local.");
-    }
-  }
-
   // Enregistrer les infos de l'hôtel
   db.updateCompanyInfo({
     name: hotelName,
@@ -1792,9 +1781,8 @@ function printRegularizationState(regId, stateMode) {
   `;
 
   window.print();
-}
+}// ---------------- CLOUD STATUS & SYNC HANDLERS ----------------
 
-// ---------------- CLOUD STATUS & FIREBASE CONFIG HANDLERS ----------------
 function updateCloudStatusIndicator() {
   const indicator = document.getElementById('sync-indicator');
   const syncText = document.getElementById('sync-text');
@@ -1813,31 +1801,44 @@ function updateCloudStatusIndicator() {
   }
 }
 
-// Enregistrer la configuration Firebase depuis les paramètres RAF
-function handleFirebaseUpdateSubmit() {
-  const configStr = document.getElementById('settings-firebase-config').value.trim();
-  if (!configStr) {
-    alert("Veuillez coller une configuration JSON Firebase valide ou cliquer sur Déconnecter.");
-    return;
-  }
-  try {
-    const config = JSON.parse(configStr);
-    db.setFirebaseConfig(config);
-    updateCloudStatusIndicator();
-    alert("Configuration Firebase enregistrée. L'application est maintenant connectée au Cloud !");
-    updateUI(db.get());
-  } catch (e) {
-    alert("Erreur : La configuration n'est pas au format JSON valide. Veuillez copier-coller l'objet de configuration directement.");
+function shareAccessLink() {
+  const url = window.location.href;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert("Lien d'accès partagé copié dans le presse-papiers !\nPartagez-le avec vos collaborateurs pour une synchronisation en direct.");
+    }).catch(err => {
+      fallbackCopyText(url);
+    });
+  } else {
+    fallbackCopyText(url);
   }
 }
 
-// Déconnecter Firebase
+function fallbackCopyText(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";  // Evite de défiler vers le bas
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    alert("Lien d'accès partagé copié dans le presse-papiers !\nPartagez-le avec vos collaborateurs pour une synchronisation en direct.");
+  } catch (err) {
+    console.error("Impossible de copier", err);
+    alert("Impossible de copier le lien automatiquement. Veuillez copier l'adresse URL de votre navigateur.");
+  }
+  document.body.removeChild(textarea);
+}
+
+// Méthodes de secours pour éviter les erreurs de liaison événementielle
+function handleFirebaseUpdateSubmit() {
+  console.log("Firebase obsolète.");
+}
+
 function handleFirebaseDisconnect() {
-  if (confirm("Voulez-vous vraiment déconnecter l'application du Cloud ? Elle fonctionnera à nouveau de façon locale.")) {
+  if (confirm("Voulez-vous vraiment réinitialiser la clé de synchronisation ? Vos appareils devront utiliser le nouveau lien généré.")) {
     db.removeFirebaseConfig();
-    document.getElementById('settings-firebase-config').value = '';
-    updateCloudStatusIndicator();
-    alert("Déconnexion réussie. Mode local activé.");
-    updateUI(db.get());
+    alert("Clé de synchronisation réinitialisée.");
   }
 }
