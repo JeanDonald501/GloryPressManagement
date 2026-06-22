@@ -75,6 +75,19 @@ class GoldenCaisseDatabase {
     }
   }
 
+  // Configuration Firebase par défaut de l'utilisateur
+  getDefaultFirebaseConfig() {
+    return {
+      apiKey: "AIzaSyDDwJbqFd3IoJS-ZJDBPkdjhiZmwImsjU8",
+      authDomain: "golden-caisse.firebaseapp.com",
+      databaseURL: "https://golden-caisse-default-rtdb.firebaseio.com",
+      projectId: "golden-caisse",
+      storageBucket: "golden-caisse.firebasestorage.app",
+      messagingSenderId: "489794587833",
+      appId: "1:489794587833:web:239232cc108867c90c1f68"
+    };
+  }
+
   // Initialisation de Firebase et extraction de l'auto-configuration par URL
   initSync() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -97,10 +110,12 @@ class GoldenCaisseDatabase {
       }
     }
 
-    const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+    let configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
     if (!configStr) {
-      this.isCloudSync = false;
-      return;
+      // Utiliser la configuration par défaut si aucune configuration personnalisée n'est présente
+      const defaultConfig = this.getDefaultFirebaseConfig();
+      configStr = JSON.stringify(defaultConfig);
+      localStorage.setItem(FIREBASE_CONFIG_KEY, configStr);
     }
 
     try {
