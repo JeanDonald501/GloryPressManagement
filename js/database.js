@@ -4,6 +4,7 @@
  */
 
 const DB_KEY = 'golden_caisse_db';
+const FIREBASE_CONFIG_KEY = 'firebase_config';
 
 // Structure par défaut de la base de données
 const DEFAULT_DB = {
@@ -45,11 +46,15 @@ const DEFAULT_DB = {
 class GoldenCaisseDatabase {
   constructor() {
     this.listeners = [];
+    this.firebaseApp = null;
+    this.firebaseDb = null;
+    this.isCloudSync = false;
     this.init();
+    this.initFirebase();
     this.setupStorageListener();
   }
 
-  // Initialisation de la BDD
+  // Initialisation de la BDD local
   init() {
     const data = localStorage.getItem(DB_KEY);
     if (!data) {
@@ -70,6 +75,91 @@ class GoldenCaisseDatabase {
     }
   }
 
+  // Initialisation de Firebase
+  initFirebase() {
+    const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+    if (!configStr) {
+      this.isCloudSync = false;
+      return;
+    }
+    try {
+      const config = JSON.parse(configStr);
+      // Éviter d'initialiser plusieurs fois
+      if (typeof firebase !== 'undefined') {
+        if (firebase.apps.length === 0) {
+          this.firebaseApp = firebase.initializeApp(config);
+        } else {
+          this.firebaseApp = firebase.app();
+        }
+        this.firebaseDb = firebase.database();
+        this.isCloudSync = true;
+        this.setupFirebaseListener();
+      }
+    } catch (e) {
+      console.error("Erreur d'initialisation Firebase :", e);
+      this.isCloudSync = false;
+    }
+  }
+
+  // Configuration de l'écouteur en temps réel Firebase
+  setupFirebaseListener() {
+    if (!this.isCloudSync || !this.firebaseDb) return;
+    const ref = this.firebaseDb.ref('golden_caisse_db');
+    ref.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Mettre à jour localStorage localement comme cache
+        localStorage.setItem(DB_KEY, JSON.stringify(data));
+        // Notifier les écouteurs locaux de l'UI
+        this.listeners.forEach(callback => callback(data));
+      } else {
+        // Si Firebase est vide (première connexion), pousser les données locales ou défaut
+        const localData = localStorage.getItem(DB_KEY);
+        if (localData) {
+          ref.set(JSON.parse(localData));
+        } else {
+          ref.set(DEFAULT_DB);
+        }
+      }
+    }, (error) => {
+      console.error("Erreur d'écoute Firebase (Vérifiez vos règles de sécurité) :", error);
+    });
+  }
+
+  // Enregistrer ou modifier la configuration Firebase
+  setFirebaseConfig(configObj) {
+    localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(configObj));
+    this.initFirebase();
+    // Synchroniser immédiatement
+    if (this.isCloudSync && this.firebaseDb) {
+      const ref = this.firebaseDb.ref('golden_caisse_db');
+      ref.once('value').then(snapshot => {
+        const data = snapshot.val();
+        if (data) {
+          // Firebase écrase le local
+          localStorage.setItem(DB_KEY, JSON.stringify(data));
+          this.listeners.forEach(callback => callback(data));
+        } else {
+          // Le local écrase Firebase
+          ref.set(this.get());
+        }
+      });
+    }
+  }
+
+  // Retirer la configuration Firebase et repasser en mode local
+  removeFirebaseConfig() {
+    if (this.isCloudSync && this.firebaseDb) {
+      this.firebaseDb.ref('golden_caisse_db').off(); // Retirer les écouteurs
+    }
+    localStorage.removeItem(FIREBASE_CONFIG_KEY);
+    this.isCloudSync = false;
+    this.firebaseApp = null;
+    this.firebaseDb = null;
+    // Déclencher une mise à jour pour notifier l'UI
+    this.listeners.forEach(callback => callback(this.get()));
+  }
+
   // S'abonner aux changements de la base de données
   subscribe(callback) {
     this.listeners.push(callback);
@@ -78,10 +168,10 @@ class GoldenCaisseDatabase {
     };
   }
 
-  // Écouteur pour la synchronisation inter-onglets
+  // Écouteur pour la synchronisation inter-onglets (fallback local)
   setupStorageListener() {
     window.addEventListener('storage', (event) => {
-      if (event.key === DB_KEY) {
+      if (event.key === DB_KEY && !this.isCloudSync) {
         this.listeners.forEach(callback => callback(this.get()));
       }
     });
@@ -95,8 +185,17 @@ class GoldenCaisseDatabase {
 
   // Sauvegarder toute la base de données
   save(data) {
+    // 1. Sauvegarde locale (cache)
     localStorage.setItem(DB_KEY, JSON.stringify(data));
-    // Notifier les écouteurs locaux
+    
+    // 2. Sauvegarde Cloud si connecté
+    if (this.isCloudSync && this.firebaseDb) {
+      this.firebaseDb.ref('golden_caisse_db').set(data).catch(err => {
+        console.error("Erreur d'écriture Cloud Firebase :", err);
+      });
+    }
+    
+    // 3. Notifier les écouteurs locaux
     this.listeners.forEach(callback => callback(data));
   }
 

@@ -13,6 +13,10 @@
   
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase App (Compat) & Realtime Database (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -86,6 +90,14 @@
               <label for="setup-admin-password">Mot de passe</label>
               <input type="password" id="setup-admin-password" class="input-control" value="123" required>
             </div>
+          </div>
+
+          <h3 class="text-gold mb-4 mt-4" style="font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;"><i class="fa-solid fa-cloud"></i> Synchronisation Multi-Postes (Optionnel)</h3>
+          
+          <div class="form-group">
+            <label for="setup-firebase-config">Configuration Firebase (JSON)</label>
+            <textarea id="setup-firebase-config" class="input-control" rows="4" placeholder='Collez le code de configuration Firebase ici (ex: { "apiKey": "...", "databaseURL": "...", ... })' style="font-family: monospace; font-size: 0.85rem; resize: vertical;"></textarea>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Laissez vide pour utiliser l'application localement sur cet appareil uniquement.</p>
           </div>
           
           <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-circle-check"></i> Enregistrer et Démarrer</button>
@@ -696,6 +708,20 @@
                   <input type="email" id="settings-hotel-email" class="input-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-floppy-disk"></i> Enregistrer les modifications</button>
+              </form>
+            </div>
+
+            <!-- Cloud Configuration -->
+            <div class="table-card mt-4">
+              <div class="table-title mb-4">Configuration Cloud / Multi-Postes</div>
+              <form id="settings-firebase-form" onsubmit="event.preventDefault(); handleFirebaseUpdateSubmit();">
+                <div class="form-group">
+                  <label for="settings-firebase-config">Configuration Firebase (JSON)</label>
+                  <textarea id="settings-firebase-config" class="input-control" rows="5" placeholder='Collez le code de configuration Firebase ici (ex: { "apiKey": "...", "databaseURL": "...", ... })' style="font-family: monospace; font-size: 0.85rem; resize: vertical;"></textarea>
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Collez l\'objet de configuration JSON obtenu dans la console Firebase.</p>
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-cloud-arrow-up"></i> Enregistrer et Connecter</button>
+                <button type="button" onclick="handleFirebaseDisconnect()" class="btn btn-secondary w-full mt-2" style="border-color: var(--danger); color: var(--danger);"><i class="fa-solid fa-cloud-slash"></i> Déconnecter le Cloud</button>
               </form>
             </div>
 

@@ -27,6 +27,9 @@ function initApp() {
   // Mettre à jour les informations de l'hôtel dans l'en-tête
   document.getElementById('header-hotel-name').textContent = data.companyInfo.name;
 
+  // Mettre à jour le statut cloud
+  updateCloudStatusIndicator();
+
   // Restaurer une session active si elle existe (simulation session persistante)
   const savedUser = sessionStorage.getItem('logged_user');
   if (savedUser) {
@@ -108,6 +111,17 @@ function handleSetupSubmit() {
   const adminName = document.getElementById('setup-admin-name').value;
   const adminUsername = document.getElementById('setup-admin-username').value;
   const adminPassword = document.getElementById('setup-admin-password').value;
+
+  // Configuration Firebase optionnelle au démarrage
+  const firebaseConfigStr = document.getElementById('setup-firebase-config').value.trim();
+  if (firebaseConfigStr) {
+    try {
+      const config = JSON.parse(firebaseConfigStr);
+      db.setFirebaseConfig(config);
+    } catch(e) {
+      alert("La configuration Firebase saisie n'est pas un JSON valide. L'application démarrera en mode local.");
+    }
+  }
 
   // Enregistrer les infos de l'hôtel
   db.updateCompanyInfo({
@@ -282,6 +296,9 @@ function showSyncFlash() {
 function updateUI(data) {
   if (!currentUser) return;
 
+  // Mettre à jour le statut cloud
+  updateCloudStatusIndicator();
+
   // Mettre à jour la notification du RAF (badge du menu latéral)
   const pendingRegsCount = data.regularizations.filter(r => r.status === 'en_attente_validation').length;
   const badgeEl = document.getElementById('raf-pending-reg-badge');
@@ -442,6 +459,11 @@ function updateUI(data) {
     document.getElementById('settings-hotel-currency').value = data.companyInfo.currency;
     document.getElementById('settings-hotel-phone').value = data.companyInfo.phone;
     document.getElementById('settings-hotel-email').value = data.companyInfo.email;
+    
+    // Charger la config Firebase existante
+    const configStr = localStorage.getItem('firebase_config');
+    document.getElementById('settings-firebase-config').value = configStr ? JSON.stringify(JSON.parse(configStr), null, 2) : '';
+    
     renderSettingsUsersList(data);
   }
 }
@@ -1770,4 +1792,52 @@ function printRegularizationState(regId, stateMode) {
   `;
 
   window.print();
+}
+
+// ---------------- CLOUD STATUS & FIREBASE CONFIG HANDLERS ----------------
+function updateCloudStatusIndicator() {
+  const indicator = document.getElementById('sync-indicator');
+  const syncText = document.getElementById('sync-text');
+  if (indicator && syncText) {
+    if (db.isCloudSync) {
+      indicator.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      indicator.style.color = 'var(--success)';
+      indicator.querySelector('.status-dot').style.background = 'var(--success)';
+      syncText.textContent = "Cloud Connecté";
+    } else {
+      indicator.style.borderColor = 'var(--border-color)';
+      indicator.style.color = 'var(--text-secondary)';
+      indicator.querySelector('.status-dot').style.background = '#94A3B8';
+      syncText.textContent = "Mode Local";
+    }
+  }
+}
+
+// Enregistrer la configuration Firebase depuis les paramètres RAF
+function handleFirebaseUpdateSubmit() {
+  const configStr = document.getElementById('settings-firebase-config').value.trim();
+  if (!configStr) {
+    alert("Veuillez coller une configuration JSON Firebase valide ou cliquer sur Déconnecter.");
+    return;
+  }
+  try {
+    const config = JSON.parse(configStr);
+    db.setFirebaseConfig(config);
+    updateCloudStatusIndicator();
+    alert("Configuration Firebase enregistrée. L'application est maintenant connectée au Cloud !");
+    updateUI(db.get());
+  } catch (e) {
+    alert("Erreur : La configuration n'est pas au format JSON valide. Veuillez copier-coller l'objet de configuration directement.");
+  }
+}
+
+// Déconnecter Firebase
+function handleFirebaseDisconnect() {
+  if (confirm("Voulez-vous vraiment déconnecter l'application du Cloud ? Elle fonctionnera à nouveau de façon locale.")) {
+    db.removeFirebaseConfig();
+    document.getElementById('settings-firebase-config').value = '';
+    updateCloudStatusIndicator();
+    alert("Déconnexion réussie. Mode local activé.");
+    updateUI(db.get());
+  }
 }
