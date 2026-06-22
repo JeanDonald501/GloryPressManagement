@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GOLDEN CAISSE - Golden Palace Hôtel</title>
+  
+  <!-- CSS Imports -->
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <!-- CDNs for icons, fonts and charts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- ================= PRINTING ZONE ================= -->
+  <!-- This zone is hidden on screen and visible during print -->
+  <div id="print-container"></div>
+
+  <!-- ================= APP ROOT ================= -->
+  <div id="app-root">
+    
+    <!-- 0. LANDING SCREEN -->
+    <div id="landing-screen" class="auth-wrapper">
+      <div class="auth-card text-center">
+        <div class="brand-logo" style="margin: 0 auto 1.5rem auto; width: 75px; height: 75px; font-size: 2.8rem; background: linear-gradient(135deg, var(--gold) 0%, #B8942A 100%); color: #0A0E1A;">G</div>
+        <h1 class="brand-name" style="font-size: 2.4rem; display: block; margin-bottom: 0.5rem; font-family: var(--font-title); font-weight: 800;">GOLDEN CAISSE</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">Système de gestion de caisse - GOLDEN PALACE HÔTEL</p>
+        
+        <div class="flex flex-col gap-4">
+          <button onclick="showSetupWizard()" class="btn btn-secondary w-full" style="border-color: var(--gold); color: var(--gold);"><i class="fa-solid fa-hotel"></i> Configuration & Accès RAF</button>
+          <button onclick="showLoginScreen()" class="btn btn-primary w-full"><i class="fa-solid fa-right-to-bracket"></i> Connexion Session</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 1. SETUP WIZARD (FIRST USE ONLY) -->
+    <div id="setup-wizard-screen" class="auth-wrapper" style="display: none;">
+      <div class="auth-card">
+        <div class="text-center mb-4">
+          <div class="brand-logo" style="margin: 0 auto 1rem auto; width: 60px; height: 60px; font-size: 2.2rem;">G</div>
+          <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Configuration Initiale</h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Bienvenue sur GOLDEN CAISSE. Veuillez configurer l'hôtel et créer le premier compte RAF administrateur.</p>
+        </div>
+        
+        <form id="setup-form" onsubmit="event.preventDefault(); handleSetupSubmit();">
+          <h3 class="text-gold mb-4" style="font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;"><i class="fa-solid fa-hotel"></i> Informations de l'Hôtel</h3>
+          
+          <div class="form-group">
+            <label for="setup-hotel-name">Nom de l'Hôtel</label>
+            <input type="text" id="setup-hotel-name" class="input-control" value="GOLDEN PALACE HÔTEL" required>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="setup-hotel-currency">Devise</label>
+              <input type="text" id="setup-hotel-currency" class="input-control" value="FCFA" required>
+            </div>
+            <div class="form-group">
+              <label for="setup-hotel-phone">Téléphone</label>
+              <input type="text" id="setup-hotel-phone" class="input-control" value="+225 27 22 40 00 00" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="setup-hotel-email">Email</label>
+            <input type="email" id="setup-hotel-email" class="input-control" value="finance@goldenpalacehotel.com" required>
+          </div>
+
+          <h3 class="text-gold mb-4 mt-4" style="font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;"><i class="fa-solid fa-user-shield"></i> Compte RAF Administrateur</h3>
+          
+          <div class="form-group">
+            <label for="setup-admin-name">Nom complet du RAF</label>
+            <input type="text" id="setup-admin-name" class="input-control" value="Jean-Paul KASSI" required>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="form-group">
+              <label for="setup-admin-username">Identifiant de connexion</label>
+              <input type="text" id="setup-admin-username" class="input-control" value="jp" required>
+            </div>
+            <div class="form-group">
+              <label for="setup-admin-password">Mot de passe</label>
+              <input type="password" id="setup-admin-password" class="input-control" value="123" required>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-circle-check"></i> Enregistrer et Démarrer</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. LOGIN SCREEN -->
+    <div id="login-screen" class="auth-wrapper" style="display: none;">
+      <div class="auth-card">
+        <div class="text-center mb-4">
+          <div class="brand-logo" style="margin: 0 auto 1.5rem auto; width: 70px; height: 70px; font-size: 2.5rem;">G</div>
+          <h1 class="brand-name" style="font-size: 2.2rem; display: block; margin-bottom: 0.5rem;">GOLDEN CAISSE</h1>
+          <p style="color: var(--text-secondary);">Portail d'accès aux caisses de l'Hôtel</p>
+        </div>
+        
+        <form id="login-form" onsubmit="event.preventDefault(); handleLoginSubmit();">
+          <div class="form-group">
+            <label for="login-username">Identifiant</label>
+            <input type="text" id="login-username" class="input-control" placeholder="Entrez votre identifiant" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="login-password">Mot de passe</label>
+            <input type="password" id="login-password" class="input-control" placeholder="••••••••" required>
+          </div>
+          
+          <div id="login-error" class="text-danger text-center mb-4" style="display: none; font-size: 0.9rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Identifiant ou mot de passe incorrect.
+          </div>
+          
+          <button type="submit" class="btn btn-primary w-full"><i class="fa-solid fa-key"></i> Se connecter</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3. MAIN APPLICATION ENVIRONMENT -->
+    <div id="main-app" class="app-container" style="display: none;">
+      
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-logo">G</div>
+          <div class="brand-name">GOLDEN CAISSE</div>
+        </div>
+
+        <nav class="w-full">
+          <!-- Navigation Caissière -->
+          <ul id="nav-caissiere" class="sidebar-menu" style="display: none;">
+            <li class="menu-item active" data-view="caisse-principale">
+              <a href="#" onclick="switchView('caisse-principale')">
+                <i class="fa-solid fa-vault"></i> Caisse Principale
+              </a>
+            </li>
+            <li class="menu-item" data-view="caisse-exploitation">
+              <a href="#" onclick="switchView('caisse-exploitation')">
+                <i class="fa-solid fa-cash-register"></i> Caisse Exploitation
+              </a>
+            </li>
+            <li class="menu-item" data-view="transferts">
+              <a href="#" onclick="switchView('transferts')">
+                <i class="fa-solid fa-money-bill-transfer"></i> Transferts de fonds
+              </a>
+            </li>
+            <li class="menu-item" data-view="regularisations">
+              <a href="#" onclick="switchView('regularisations')">
+                <i class="fa-solid fa-scale-balanced"></i> Régularisations Acheteuse
+              </a>
+            </li>
+          </ul>
+
+          <!-- Navigation RAF -->
+          <ul id="nav-raf" class="sidebar-menu" style="display: none;">
+            <li class="menu-item active" data-view="raf-dashboard">
+              <a href="#" onclick="switchView('raf-dashboard')">
+                <i class="fa-solid fa-chart-line"></i> Tableau de bord
+              </a>
+            </li>
+            <li class="menu-item" data-view="raf-validation">
+              <a href="#" onclick="switchView('raf-validation')" style="display: flex; align-items: center; width: 100%;">
+                <i class="fa-solid fa-circle-check"></i> Validation Régul.
+                <span id="raf-pending-reg-badge" style="display: none; background: var(--danger); color: white; margin-left: auto; padding: 0.15rem 0.45rem; border-radius: 99px; font-size: 0.75rem; font-weight: bold; border: 1px solid rgba(255,255,255,0.15);">0</span>
+              </a>
+            </li>
+            <li class="menu-item" data-view="raf-historiques">
+              <a href="#" onclick="switchView('raf-historiques')">
+                <i class="fa-solid fa-clock-rotate-left"></i> Historique Opérations
+              </a>
+            </li>
+            <li class="menu-item" data-view="raf-parametres">
+              <a href="#" onclick="switchView('raf-parametres')">
+                <i class="fa-solid fa-gears"></i> Paramètres
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-profile mb-4">
+            <div class="avatar" id="user-avatar">U</div>
+            <div class="user-details">
+              <span class="user-name" id="profile-name">Nom de l'utilisateur</span>
+              <span class="user-role" id="profile-role">Rôle de l'utilisateur</span>
+            </div>
+          </div>
+          <button onclick="handleLogout()" class="btn btn-secondary btn-sm w-full"><i class="fa-solid fa-power-off"></i> Déconnexion</button>
+        </div>
+      </aside>
+
+      <!-- MAIN VIEWPORT -->
+      <main class="main-viewport">
+        
+        <!-- TOPBAR HEADER -->
+        <header class="top-header">
+          <div class="page-title-wrap">
+            <h1 id="view-title">Titre de la vue</h1>
+            <p id="view-subtitle">Sous-titre de la vue</p>
+          </div>
+          <div class="header-actions">
+            <!-- Sync Indicator -->
+            <div class="sync-status" id="sync-indicator">
+              <span class="status-dot"></span>
+              <span id="sync-text">Synchronisé</span>
+            </div>
+            
+            <!-- Devise Indicator / Hotel Info -->
+            <div class="sync-status" style="background: rgba(255,255,255,0.04); color: var(--text-secondary); border-color: var(--border-color);">
+              <i class="fa-solid fa-hotel text-gold"></i>
+              <span id="header-hotel-name">Golden Palace</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- ================= CAISSIÈRE VIEWS ================= -->
+        
+        <!-- VIEW: CAISSE PRINCIPALE -->
+        <section id="view-caisse-principale" class="tab-pane active">
+          <div class="caisse-overview-grid mb-4">
+            <!-- State Card -->
+            <div class="caisse-card caisse-principale">
+              <div class="caisse-header">
+                <div class="caisse-badge" id="cp-status-badge">Fermée</div>
+                <i class="fa-solid fa-vault text-gold" style="font-size: 1.5rem;"></i>
+              </div>
+              <div class="caisse-title">
+                <h3>Caisse Principale</h3>
+                <p id="cp-opening-details">Non ouverte aujourd'hui</p>
+              </div>
+              <div class="caisse-balance">
+                <div class="label">Solde actuel en caisse</div>
+                <div class="amount" id="cp-current-balance">0 FCFA</div>
+              </div>
+              <div class="caisse-actions" id="cp-actions-container">
+                <!-- Actions injectées dynamiquement (Ouvrir / Fermer) -->
+              </div>
+            </div>
+
+            <!-- Quick Stats/Info Card -->
+            <div class="caisse-card caisse-info-summary" style="background: linear-gradient(135deg, rgba(25, 35, 64, 0.45) 0%, rgba(212, 175, 55, 0.05) 100%);">
+              <div class="caisse-header">
+                <div class="caisse-badge">Statistiques Jour</div>
+                <i class="fa-solid fa-chart-pie text-gold"></i>
+              </div>
+              <div class="grid grid-cols-2 gap-4 mt-2">
+                <div class="flex flex-col">
+                  <span style="font-size: 0.8rem; color: var(--text-secondary);">Total Entrées</span>
+                  <span class="text-success font-bold" id="cp-day-entries" style="font-size: 1.25rem;">0 FCFA</span>
+                </div>
+                <div class="flex flex-col">
+                  <span style="font-size: 0.8rem; color: var(--text-secondary);">Total Sorties</span>
+                  <span class="text-danger font-bold" id="cp-day-exits" style="font-size: 1.25rem;">0 FCFA</span>
+                </div>
+              </div>
+              <div class="caisse-actions" style="margin-top: auto;" id="cp-ops-actions">
+                <button onclick="openTransactionModal('principale', 'entree')" class="btn btn-primary" id="btn-cp-entry" disabled><i class="fa-solid fa-circle-plus"></i> Entrée</button>
+                <button onclick="openTransactionModal('principale', 'sortie')" class="btn btn-danger" id="btn-cp-exit" disabled><i class="fa-solid fa-circle-minus"></i> Sortie</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alert Unjustified Box (Show only if count > 0) -->
+          <div class="unjustified-alert-box mb-4" id="cp-unjustified-alert" style="display: none;">
+            <div class="alert-header">
+              <h3><i class="fa-solid fa-triangle-exclamation"></i> Alerte : Pièces comptables en attente de justificatifs</h3>
+              <span class="caisse-badge" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); font-weight: bold;" id="cp-unjustified-count">0</span>
+            </div>
+            <div class="alert-items-list" id="cp-unjustified-items-list">
+              <!-- Elements injectés -->
+            </div>
+          </div>
+
+          <!-- Logs Caisse Principale -->
+          <div class="table-card">
+            <div class="table-header-row">
+              <div class="table-title">Opérations du jour - Caisse Principale</div>
+              <div class="table-search-filters">
+                <div class="search-input-wrap">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="cp-search" class="input-control btn-sm" placeholder="Rechercher..." oninput="filterTransactions('principale')">
+                </div>
+                <button onclick="printCaisseDayReport('principale')" class="btn btn-secondary btn-sm"><i class="fa-solid fa-print"></i> Rapport de Clôture</button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="custom-table" id="table-cp-transactions">
+                <thead>
+                  <tr>
+                    <th>N° Pièce</th>
+                    <th>Date & Heure</th>
+                    <th>Motif</th>
+                    <th>Bénéficiaire / Provenance</th>
+                    <th>Type</th>
+                    <th class="text-right">Montant</th>
+                    <th>Justif.</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Transactions injectées dynamiquement -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW: CAISSE EXPLOITATION -->
+        <section id="view-caisse-exploitation" class="tab-pane">
+          <div class="caisse-overview-grid mb-4">
+            <!-- State Card -->
+            <div class="caisse-card caisse-exploitation">
+              <div class="caisse-header">
+                <div class="caisse-badge" id="ce-status-badge">Fermée</div>
+                <i class="fa-solid fa-cash-register text-info" style="font-size: 1.5rem;"></i>
+              </div>
+              <div class="caisse-title">
+                <h3>Caisse d'Exploitation</h3>
+                <p id="ce-opening-details">Non ouverte aujourd'hui</p>
+              </div>
+              <div class="caisse-balance">
+                <div class="label">Solde actuel en caisse</div>
+                <div class="amount" id="ce-current-balance">0 FCFA</div>
+              </div>
+              <div class="caisse-actions" id="ce-actions-container">
+                <!-- Actions injectées dynamiquement -->
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="caisse-card caisse-info-summary" style="background: linear-gradient(135deg, rgba(25, 35, 64, 0.45) 0%, rgba(59, 130, 246, 0.05) 100%);">
+              <div class="caisse-header">
+                <div class="caisse-badge">Statistiques Jour</div>
+                <i class="fa-solid fa-chart-pie text-info"></i>
+              </div>
+              <div class="grid grid-cols-2 gap-4 mt-2">
+                <div class="flex flex-col">
+                  <span style="font-size: 0.8rem; color: var(--text-secondary);">Total Entrées</span>
+                  <span class="text-success font-bold" id="ce-day-entries" style="font-size: 1.25rem;">0 FCFA</span>
+                </div>
+                <div class="flex flex-col">
+                  <span style="font-size: 0.8rem; color: var(--text-secondary);">Total Sorties</span>
+                  <span class="text-danger font-bold" id="ce-day-exits" style="font-size: 1.25rem;">0 FCFA</span>
+                </div>
+              </div>
+              <div class="caisse-actions" style="margin-top: auto;" id="ce-ops-actions">
+                <button onclick="openTransactionModal('exploitation', 'entree')" class="btn btn-primary" id="btn-ce-entry" disabled><i class="fa-solid fa-circle-plus"></i> Entrée</button>
+                <button onclick="openTransactionModal('exploitation', 'sortie')" class="btn btn-danger" id="btn-ce-exit" disabled><i class="fa-solid fa-circle-minus"></i> Sortie</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logs Caisse Exploitation -->
+          <div class="table-card">
+            <div class="table-header-row">
+              <div class="table-title">Opérations du jour - Caisse d'Exploitation</div>
+              <div class="table-search-filters">
+                <div class="search-input-wrap">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="ce-search" class="input-control btn-sm" placeholder="Rechercher..." oninput="filterTransactions('exploitation')">
+                </div>
+                <button onclick="printCaisseDayReport('exploitation')" class="btn btn-secondary btn-sm"><i class="fa-solid fa-print"></i> Rapport de Clôture</button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="custom-table" id="table-ce-transactions">
+                <thead>
+                  <tr>
+                    <th>N° Pièce</th>
+                    <th>Date & Heure</th>
+                    <th>Motif</th>
+                    <th>Bénéficiaire / Provenance</th>
+                    <th>Type</th>
+                    <th class="text-right">Montant</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Transactions injectées dynamiquement -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW: TRANSFERTS -->
+        <section id="view-transferts" class="tab-pane">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="table-card">
+              <div class="table-title mb-4">Faire un transfert de fonds</div>
+              <form id="transfer-form" onsubmit="event.preventDefault(); handleTransferSubmit();">
+                <div class="form-group">
+                  <label for="transfer-from">Caisse émettrice</label>
+                  <select id="transfer-from" class="input-control" onchange="adjustTransferDestinations()" required>
+                    <option value="principale">Caisse Principale</option>
+                    <option value="exploitation">Caisse d'Exploitation</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="transfer-to">Caisse réceptrice</label>
+                  <select id="transfer-to" class="input-control" disabled required>
+                    <option value="exploitation">Caisse d'Exploitation</option>
+                    <option value="principale">Caisse Principale</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="transfer-amount">Montant à transférer</label>
+                  <div class="input-amount-wrapper">
+                    <input type="text" id="transfer-amount" class="input-control formatted-amount" placeholder="0" required>
+                    <span class="currency-symbol">FCFA</span>
+                  </div>
+                  <span id="transfer-max-hint" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;"></span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-money-bill-transfer"></i> Valider le transfert</button>
+              </form>
+            </div>
+            
+            <div class="table-card">
+              <div class="table-title mb-4">Derniers transferts effectués</div>
+              <div class="table-container">
+                <table class="custom-table" id="table-transfer-history">
+                  <thead>
+                    <tr>
+                      <th>N° Pièce</th>
+                      <th>Date</th>
+                      <th>De</th>
+                      <th>Vers</th>
+                      <th class="text-right">Montant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Inséré dynamiquement -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW: REGULARISATIONS ACHETEUSE -->
+        <section id="view-regularisations" class="tab-pane">
+          <div class="flex flex-col gap-4">
+            
+            <!-- Préparation unitaire de régularisation -->
+            <div class="table-card">
+              <div class="table-header-row">
+                <div class="table-title">Préparation de la régularisation hebdomadaire</div>
+                <div class="table-search-filters">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label for="reg-acheteuse" style="font-family: var(--font-title); font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">Acheteuse :</label>
+                    <select id="reg-acheteuse" class="input-control btn-sm" style="width: auto; background: transparent; border: none; padding: 0;" onchange="loadAcheteusePendingOps()" required>
+                      <option value="Mme Bamba">Mme Bamba (Acheteuse)</option>
+                    </select>
+                  </div>
+                  <!-- Filtre Date Début/Fin -->
+                  <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label for="reg-date-start" style="font-family: var(--font-title); font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">Du :</label>
+                    <input type="date" id="reg-date-start" class="input-control btn-sm" style="width: auto; background: transparent; border: none; padding: 0; color: var(--text-primary); cursor: pointer;" onchange="loadAcheteusePendingOps()">
+                    <label for="reg-date-end" style="font-family: var(--font-title); font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0; margin-left: 0.5rem;">Au :</label>
+                    <input type="date" id="reg-date-end" class="input-control btn-sm" style="width: auto; background: transparent; border: none; padding: 0; color: var(--text-primary); cursor: pointer;" onchange="loadAcheteusePendingOps()">
+                  </div>
+                  <button type="button" onclick="printPendingRegOps()" class="btn btn-secondary btn-sm"><i class="fa-solid fa-print"></i> Imprimer les opérations à régulariser</button>
+                </div>
+              </div>
+              
+              <div class="table-container">
+                <table class="custom-table" id="table-reg-pending-ops">
+                  <thead>
+                    <tr>
+                      <th style="cursor: pointer;" onclick="toggleSortPendingOpsByDate()">Date & Heure <i class="fa-solid fa-sort" id="sort-icon-date"></i></th>
+                      <th>N° Pièce</th>
+                      <th>Motif</th>
+                      <th class="text-right">Montant Perçu</th>
+                      <th style="width: 220px;">Montant Réel Dépensé</th>
+                      <th class="text-right" style="width: 160px;">Écart généré</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Rempli dynamiquement -->
+                  </tbody>
+                  <tfoot>
+                    <tr style="font-weight: bold; background: rgba(255,255,255,0.02);">
+                      <td colspan="3" class="text-right">Totaux :</td>
+                      <td class="text-right text-gold" id="reg-total-percu">0 FCFA</td>
+                      <td class="text-right" id="reg-total-reel" style="padding-right: 2rem;">0 FCFA</td>
+                      <td class="text-right" id="reg-total-ecart">0 FCFA</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              
+              <div class="flex justify-between items-center mt-4">
+                <div id="reg-summary-message" style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">
+                  Sélectionnez une acheteuse et saisissez les montants réellement dépensés.
+                </div>
+                <button type="button" onclick="submitRegularizationBreakdown()" class="btn btn-primary" id="btn-submit-reg-breakdown" disabled><i class="fa-solid fa-scale-balanced"></i> Transmettre pour Visa RAF</button>
+              </div>
+            </div>
+
+            <!-- Historique des régularisations -->
+            <div class="table-card">
+              <div class="table-title mb-4">Historique des régularisations hebdomadaires</div>
+              <div class="table-container">
+                <table class="custom-table" id="table-reg-history">
+                  <thead>
+                    <tr>
+                      <th>Date demande</th>
+                      <th>Acheteuse</th>
+                      <th class="text-right">Total Bons</th>
+                      <th class="text-right">Total Réel</th>
+                      <th class="text-right">Écart Total</th>
+                      <th>Statut</th>
+                      <th class="text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Régularisations injectées dynamiquement -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+          </div>
+        </section>
+
+
+        <!-- ================= RAF VIEWS ================= -->
+        
+        <!-- VIEW: RAF DASHBOARD -->
+        <section id="view-raf-dashboard" class="tab-pane">
+          <!-- KPI GRID -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-icon"><i class="fa-solid fa-vault"></i></div>
+              <div class="kpi-label">Solde Caisse Principale</div>
+              <div class="kpi-value" id="kpi-cp-balance">0 FCFA</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="color: var(--info); background: var(--info-glow);"><i class="fa-solid fa-cash-register"></i></div>
+              <div class="kpi-label">Solde Caisse Exploitation</div>
+              <div class="kpi-value" id="kpi-ce-balance">0 FCFA</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="color: var(--warning); background: var(--warning-glow);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="kpi-label">Pièces Non Justifiées</div>
+              <div class="kpi-value" id="kpi-unjustified-count">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="color: var(--success); background: var(--success-glow);"><i class="fa-solid fa-hourglass-half"></i></div>
+              <div class="kpi-label">Régul. en attente Visa</div>
+              <div class="kpi-value" id="kpi-pending-reg-count">0</div>
+            </div>
+          </div>
+
+          <!-- CHARTS GRID -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="table-title mb-4">Flux financiers combinés (Entrées vs Sorties)</div>
+              <div class="chart-container">
+                <canvas id="flowChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="table-title mb-4">Répartition des soldes</div>
+              <div class="chart-container">
+                <canvas id="ratioChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW: RAF VALIDATION REGULARISATIONS -->
+        <section id="view-raf-validation" class="tab-pane">
+          <div class="table-card">
+            <div class="table-title mb-4">Régularisations en attente de visa du RAF</div>
+            <div class="table-container">
+              <table class="custom-table" id="table-raf-pending-reg">
+                <thead>
+                  <tr>
+                    <th>Date demande</th>
+                    <th>Acheteuse</th>
+                    <th class="text-right">Décaissements</th>
+                    <th class="text-right">Dépenses réelles</th>
+                    <th class="text-right">Écart</th>
+                    <th class="text-center">État Avant Régul.</th>
+                    <th class="text-center">Décision</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Injecté dynamiquement -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW: RAF HISTORIQUES -->
+        <section id="view-raf-historiques" class="tab-pane">
+          <!-- Split Layout for History: Caisse Principale Left, Caisse d'Exploitation Right -->
+          <div class="grid grid-cols-2 gap-4">
+            
+            <!-- Historique Caisse Principale -->
+            <div class="table-card">
+              <div class="table-header-row">
+                <div class="table-title">Historique : Caisse Principale</div>
+                <div class="table-search-filters">
+                  <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="raf-cp-search" class="input-control btn-sm" placeholder="Rechercher..." oninput="filterRafHistory('principale')">
+                  </div>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table" id="table-raf-cp-history">
+                  <thead>
+                    <tr>
+                      <th>Pièce</th>
+                      <th>Date</th>
+                      <th>Motif</th>
+                      <th>Bénéficiaire</th>
+                      <th class="text-right">Montant</th>
+                      <th class="text-center">Bon</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Injecté dynamiquement -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Historique Caisse d'Exploitation -->
+            <div class="table-card">
+              <div class="table-header-row">
+                <div class="table-title">Historique : Caisse d'Exploitation</div>
+                <div class="table-search-filters">
+                  <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="raf-ce-search" class="input-control btn-sm" placeholder="Rechercher..." oninput="filterRafHistory('exploitation')">
+                  </div>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table" id="table-raf-ce-history">
+                  <thead>
+                    <tr>
+                      <th>Pièce</th>
+                      <th>Date</th>
+                      <th>Motif</th>
+                      <th>Bénéficiaire</th>
+                      <th class="text-right">Montant</th>
+                      <th class="text-center">Bon</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Injecté dynamiquement -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- VIEW: RAF PARAMETRES -->
+        <section id="view-raf-parametres" class="tab-pane">
+          <div class="settings-grid">
+            
+            <!-- Company Info Update -->
+            <div class="table-card">
+              <div class="table-title mb-4">Informations de l'entreprise</div>
+              <form id="settings-hotel-form" onsubmit="event.preventDefault(); handleHotelUpdateSubmit();">
+                <div class="form-group">
+                  <label for="settings-hotel-name">Nom de l'établissement</label>
+                  <input type="text" id="settings-hotel-name" class="input-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="settings-hotel-currency">Devise par défaut</label>
+                  <input type="text" id="settings-hotel-currency" class="input-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="settings-hotel-phone">Numéro de téléphone</label>
+                  <input type="text" id="settings-hotel-phone" class="input-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="settings-hotel-email">Adresse e-mail</label>
+                  <input type="email" id="settings-hotel-email" class="input-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-floppy-disk"></i> Enregistrer les modifications</button>
+              </form>
+            </div>
+
+            <!-- User Creation -->
+            <div class="table-card">
+              <div class="table-title mb-4">Gestion des utilisateurs</div>
+              <form id="settings-user-form" onsubmit="event.preventDefault(); handleUserCreateSubmit();">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label for="new-user-name">Nom complet</label>
+                    <input type="text" id="new-user-name" class="input-control" placeholder="ex: Koffi N'cho" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="new-user-role">Rôle de l'agent</label>
+                    <select id="new-user-role" class="input-control" required>
+                      <option value="caissiere">Caissière</option>
+                      <option value="raf">RAF (Responsable)</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="form-group">
+                    <label for="new-user-username">Identifiant de connexion</label>
+                    <input type="text" id="new-user-username" class="input-control" placeholder="ex: kncho" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="new-user-password">Mot de passe de l'agent</label>
+                    <input type="password" id="new-user-password" class="input-control" placeholder="••••••••" required>
+                  </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-full mt-2"><i class="fa-solid fa-user-plus"></i> Créer l'utilisateur</button>
+              </form>
+
+              <!-- User List -->
+              <div class="user-list" id="users-list-container">
+                <!-- Les utilisateurs seront affichés ici -->
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- ================= MODALS CONTAINER ================= -->
+  
+  <!-- MODAL: OUVERTURE DE CAISSE -->
+  <div class="modal-backdrop" id="modal-ouvrir-caisse">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="open-caisse-modal-title">Ouverture de caisse</h2>
+        <button class="modal-close" onclick="closeModal('modal-ouvrir-caisse')">&times;</button>
+      </div>
+      <form id="open-caisse-form" onsubmit="event.preventDefault(); handleOpenCaisseSubmit();">
+        <div class="modal-body">
+          <input type="hidden" id="open-caisse-name">
+          <div class="form-group">
+            <label for="open-caisse-amount">Montant d'ouverture de caisse (Encaisse initiale)</label>
+            <div class="input-amount-wrapper">
+              <input type="text" id="open-caisse-amount" class="input-control formatted-amount" placeholder="0" required>
+              <span class="currency-symbol">FCFA</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Veuillez saisir le montant physique avec lequel vous commencez la journée.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-ouvrir-caisse')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Valider l'ouverture</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: FERMETURE DE CAISSE & BILLETAGE -->
+  <div class="modal-backdrop" id="modal-fermer-caisse">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2 id="close-caisse-modal-title">Fermeture de caisse & Billetage</h2>
+        <button class="modal-close" onclick="closeModal('modal-fermer-caisse')">&times;</button>
+      </div>
+      <form id="close-caisse-form" onsubmit="event.preventDefault(); handleCloseCaisseSubmit();">
+        <div class="modal-body">
+          <input type="hidden" id="close-caisse-name">
+          
+          <div class="flex justify-between items-center mb-4">
+            <div>
+              <h3 style="font-size: 1.1rem;">Billetage physique</h3>
+              <p style="color: var(--text-secondary); font-size: 0.8rem;">Veuillez compter le nombre de billets et pièces en caisse.</p>
+            </div>
+            <div class="text-right">
+              <span style="font-size: 0.8rem; color: var(--text-secondary);">Solde théorique :</span>
+              <div class="font-bold text-gold" id="close-caisse-theoretical" style="font-size: 1.2rem;">0 FCFA</div>
+            </div>
+          </div>
+
+          <!-- Billetage table grid -->
+          <div class="billetage-grid">
+            <!-- Billets -->
+            <div class="billet-row">
+              <span class="billet-label">10 000</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-10000" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-10000">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">5 000</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-5000" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-5000">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">2 000</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-2000" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-2000">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">1 000</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-1000" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-1000">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">500</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-500" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-500">0 FCFA</span>
+            </div>
+            <!-- Pièces -->
+            <div class="billet-row">
+              <span class="billet-label">250 / 200</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-200" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-200">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">100</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-100" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-100">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">50</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-50" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-50">0 FCFA</span>
+            </div>
+            <div class="billet-row">
+              <span class="billet-label">25 / 10 / 5</span>
+              <span class="billet-multiply">&times;</span>
+              <input type="number" min="0" id="billet-10" class="input-control billet-qty btn-sm" value="0" oninput="calculateBilletageTotal()">
+              <span class="billet-total" id="total-10">0 FCFA</span>
+            </div>
+          </div>
+
+          <!-- Recap total billetage vs solde theorique -->
+          <div class="reg-details-panel" style="margin-top: 1rem;">
+            <div class="reg-row">
+              <span>Total physique calculé :</span>
+              <span id="billetage-total-physique" class="reg-value font-bold text-gold" style="font-size: 1.15rem;">0 FCFA</span>
+            </div>
+            <div class="reg-row">
+              <span>Écart de caisse :</span>
+              <span id="billetage-variance" class="reg-value font-bold">0 FCFA</span>
+            </div>
+            <div id="billetage-variance-message" style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic;">
+              Pas d'écart détecté. Caisse équilibrée.
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-fermer-caisse')">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-circle-check"></i> Valider et Générer le rapport</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NOUVELLE TRANSACTION (ENTRÉE/SORTIE) -->
+  <div class="modal-backdrop" id="modal-transaction">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="tx-modal-title">Enregistrer un mouvement</h2>
+        <button class="modal-close" onclick="closeModal('modal-transaction')">&times;</button>
+      </div>
+      <form id="tx-form" onsubmit="event.preventDefault(); handleTransactionSubmit();">
+        <div class="modal-body">
+          <input type="hidden" id="tx-caisse">
+          <input type="hidden" id="tx-type">
+          
+          <div class="form-group">
+            <label for="tx-motif" id="tx-motif-label">Motif de l'opération</label>
+            <select id="tx-motif" class="input-control" onchange="adjustBeneficiaryField()" required>
+              <!-- Les motifs seront chargés dynamiquement selon la caisse et le type -->
+            </select>
+          </div>
+
+          <div class="form-group" id="tx-beneficiaire-type-group" style="display: none;">
+            <label for="tx-beneficiaire-type">Type de bénéficiaire</label>
+            <select id="tx-beneficiaire-type" class="input-control" onchange="adjustBeneficiaryField()" required>
+              <option value="Acheteuse">Acheteuse</option>
+              <option value="Fournisseurs">Fournisseurs</option>
+              <option value="Banques">Banques</option>
+              <option value="Autres">Autres</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="tx-beneficiaire" id="tx-beneficiaire-label">Bénéficiaire</label>
+            <!-- Soit un input text, soit un select pour l'acheteuse -->
+            <div id="tx-beneficiaire-wrap">
+              <input type="text" id="tx-beneficiaire" class="input-control" placeholder="Entrez le nom" required>
+            </div>
+          </div>
+
+          <div class="form-group" id="tx-objet-group" style="display: none;">
+            <label for="tx-objet">Objet du décaissement</label>
+            <input type="text" id="tx-objet" class="input-control" placeholder="Précisez l'objet exact de la dépense">
+          </div>
+
+          <div class="form-group">
+            <label for="tx-amount">Montant de l'opération</label>
+            <div class="input-amount-wrapper">
+              <input type="text" id="tx-amount" class="input-control formatted-amount" placeholder="0" required>
+              <span class="currency-symbol">FCFA</span>
+            </div>
+          </div>
+
+          <!-- Section justificatif (uniquement pour les sorties de Caisse Principale) -->
+          <div class="form-group" id="tx-justificatif-group" style="display: none; flex-direction: row; align-items: center; gap: 0.5rem; background: rgba(245, 158, 11, 0.05); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.15);">
+            <input type="checkbox" id="tx-justificatif-attendu" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="tx-justificatif-attendu" style="margin-bottom: 0; cursor: pointer; color: var(--text-primary);">
+              <strong>Justificatif attendu plus tard</strong> (Alerte si coché)
+            </label>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-transaction')">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="btn-tx-submit">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP ENGINE LOGIC -->
+  <script src="js/database.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
