@@ -42,229 +42,6 @@ const DEFAULT_DB = {
   regularizations: []
 };
 
-// Données de simulation pour peupler l'application dès le départ
-const SEED_DATA = {
-  companyInfo: {
-    name: 'GOLDEN PALACE HÔTEL',
-    address: 'Boulevard Valéry Giscard d\'Estaing, Abidjan',
-    phone: '+225 07 89 45 12 12',
-    email: 'finance@goldenpalacehotel.com',
-    currency: 'FCFA'
-  },
-  users: [
-    { id: 'usr_1', username: 'mariam', name: 'Mariam KOFFI', role: 'caissiere', password: '123' },
-    { id: 'usr_2', username: 'jp', name: 'Jean-Paul KASSI', role: 'raf', password: '123' }
-  ],
-  caisses: {
-    principale: {
-      isOpen: true,
-      openedAt: new Date(new Date().setHours(8, 0, 0)).toISOString(),
-      openedBy: 'Mariam KOFFI',
-      initialBalance: 5000000,
-      currentBalance: 3770000,
-      billetage: null,
-      closedAt: null
-    },
-    exploitation: {
-      isOpen: true,
-      openedAt: new Date(new Date().setHours(8, 5, 0)).toISOString(),
-      openedBy: 'Mariam KOFFI',
-      initialBalance: 1200000,
-      currentBalance: 2470000,
-      billetage: null,
-      closedAt: null
-    }
-  },
-  transactions: [
-    // Transactions Caisse Principale
-    {
-      id: 'tx_p1',
-      caisse: 'principale',
-      type: 'entree',
-      motif: 'Approvisionnement du RAF',
-      beneficiaire: 'Caisse principale',
-      montant: 5000000,
-      date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-P001',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_p2',
-      caisse: 'principale',
-      type: 'sortie',
-      motif: 'Dépenses d\'exploitation',
-      beneficiaire: 'Acheteuse (Mme Bamba)',
-      montant: 1200000,
-      date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
-      justificatifAttendu: true,
-      justifie: false,
-      pieceRecu: 'BS-P001',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_p3',
-      caisse: 'principale',
-      type: 'entree',
-      motif: 'Recettes des boutiques du HALL',
-      beneficiaire: 'Caisse principale',
-      montant: 850000,
-      date: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-P002',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_p4',
-      caisse: 'principale',
-      type: 'sortie',
-      motif: 'Règlement des fournisseurs',
-      beneficiaire: 'SODECI',
-      montant: 430000,
-      date: new Date(new Date().setHours(10, 15, 0)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BS-P002',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_p5',
-      caisse: 'principale',
-      type: 'sortie',
-      motif: 'Versement en banque',
-      beneficiaire: 'SGCI Banque',
-      montant: 2000000,
-      date: new Date(new Date().setHours(11, 45, 0)).toISOString(),
-      justificatifAttendu: true,
-      justifie: false,
-      pieceRecu: 'BS-P003',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_p6',
-      caisse: 'principale',
-      type: 'entree',
-      motif: 'Autres',
-      beneficiaire: 'Caisse principale',
-      montant: 1550000,
-      date: new Date(new Date().setHours(14, 20, 0)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-P003',
-      created_by: 'Mariam KOFFI'
-    },
-
-    // Transactions Caisse d'Exploitation
-    {
-      id: 'tx_e1',
-      caisse: 'exploitation',
-      type: 'entree',
-      motif: 'Réception',
-      beneficiaire: 'Caisse d\'exploitation',
-      montant: 750000,
-      date: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-E001',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_e2',
-      caisse: 'exploitation',
-      type: 'entree',
-      motif: 'Restaurant',
-      beneficiaire: 'Caisse d\'exploitation',
-      montant: 950000,
-      date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-E002',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_e3',
-      caisse: 'exploitation',
-      type: 'sortie',
-      motif: 'Remise de fonds au DAF',
-      beneficiaire: 'DAF (M. Diop)',
-      montant: 1500000,
-      date: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BS-E001',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_e4',
-      caisse: 'exploitation',
-      type: 'entree',
-      motif: 'Bar HALL',
-      beneficiaire: 'Caisse d\'exploitation',
-      montant: 620000,
-      date: new Date(new Date().setHours(9, 30, 0)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-E003',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_e5',
-      caisse: 'exploitation',
-      type: 'entree',
-      motif: 'Piscine',
-      beneficiaire: 'Caisse d\'exploitation',
-      montant: 350000,
-      date: new Date(new Date().setHours(13, 0, 0)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-E004',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_e6',
-      caisse: 'exploitation',
-      type: 'sortie',
-      motif: 'Paiement de commissions',
-      beneficiaire: 'Chauffeur VIP',
-      montant: 100000,
-      date: new Date(new Date().setHours(15, 30, 0)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BS-E002',
-      created_by: 'Mariam KOFFI'
-    },
-    {
-      id: 'tx_e7',
-      caisse: 'exploitation',
-      type: 'entree',
-      motif: 'Autres',
-      beneficiaire: 'Caisse d\'exploitation',
-      montant: 150000,
-      date: new Date(new Date().setHours(16, 10, 0)).toISOString(),
-      justificatifAttendu: false,
-      justifie: true,
-      pieceRecu: 'BE-E005',
-      created_by: 'Mariam KOFFI'
-    }
-  ],
-  regularizations: [
-    {
-      id: 'reg_1',
-      date: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(),
-      acheteuse: 'Mme Bamba',
-      decaissementsEffectues: 1500000,
-      depensesReelles: 1350000,
-      ecart: 150000, // Acheteuse doit rembourser 150 000
-      status: 'finalise',
-      created_at: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(),
-      validated_by: 'Jean-Paul KASSI',
-      finalized_at: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString()
-    }
-  ]
-};
-
 class GoldenCaisseDatabase {
   constructor() {
     this.listeners = [];
@@ -276,18 +53,19 @@ class GoldenCaisseDatabase {
   init() {
     const data = localStorage.getItem(DB_KEY);
     if (!data) {
-      // Premier lancement : on met les données par défaut (avec démo)
-      this.save(SEED_DATA);
+      // Premier lancement : on met les données par défaut (vides)
+      this.save(DEFAULT_DB);
     } else {
-      // On s'assure que toutes les structures sont cohérentes
+      // On s'assure que toutes les structures sont cohérentes et qu'il n'y a pas de données de simulation résiduelles
       try {
         const parsed = JSON.parse(data);
-        // Au cas où une propriété critique manquerait
-        if (!parsed.companyInfo || !parsed.users || !parsed.caisses) {
-          this.save(SEED_DATA);
+        // Si la base contient les transactions de démo (ex: tx_p1), on force la réinitialisation
+        const hasDemoData = parsed.transactions && parsed.transactions.some(tx => tx.id.startsWith('tx_p') || tx.id.startsWith('tx_e'));
+        if (hasDemoData || !parsed.companyInfo || !parsed.users || !parsed.caisses) {
+          this.save(DEFAULT_DB);
         }
       } catch (e) {
-        this.save(SEED_DATA);
+        this.save(DEFAULT_DB);
       }
     }
   }
