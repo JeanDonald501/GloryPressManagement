@@ -14,9 +14,9 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- GunDB & CryptoJS -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <!-- Firebase App & Database -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -707,6 +707,21 @@
                   <input type="email" id="settings-hotel-email" class="input-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-floppy-disk"></i> Enregistrer les modifications</button>
+              </form>
+            </div>
+
+            <!-- Configuration Cloud / Multi-Postes -->
+            <div class="table-card">
+              <div class="table-title mb-4">Configuration Cloud / Multi-Postes</div>
+              <form id="settings-firebase-form" onsubmit="event.preventDefault(); handleFirebaseUpdateSubmit();">
+                <div class="form-group">
+                  <label for="settings-firebase-config">Configuration JSON Firebase</label>
+                  <textarea id="settings-firebase-config" class="input-control font-mono" rows="6" style="resize: vertical; font-family: monospace;" placeholder='Collez ici votre configuration FirebaseConfig (JSON) :&#10;{&#10;  "apiKey": "...",&#10;  "authDomain": "...",&#10;  "databaseURL": "...",&#10;  "projectId": "...",&#10;  "storageBucket": "...",&#10;  "messagingSenderId": "...",&#10;  "appId": "..."&#10;}'></textarea>
+                </div>
+                <div class="flex gap-4">
+                  <button type="submit" class="btn btn-primary flex-1"><i class="fa-solid fa-cloud-arrow-up"></i> Enregistrer et Connecter</button>
+                  <button type="button" onclick="handleFirebaseDisconnect()" class="btn btn-danger"><i class="fa-solid fa-cloud-slash"></i> Déconnecter</button>
+                </div>
               </form>
             </div>
 

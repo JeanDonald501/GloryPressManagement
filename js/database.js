@@ -46,9 +46,8 @@ const DEFAULT_DB = {
 class GoldenCaisseDatabase {
   constructor() {
     this.listeners = [];
-    this.gun = null;
-    this.gunNode = null;
-    this.syncKey = null;
+    this.firebaseApp = null;
+    this.firebaseDb = null;
     this.isCloudSync = false;
     this.init();
     this.initSync();
@@ -76,112 +75,125 @@ class GoldenCaisseDatabase {
     }
   }
 
-  // Initialisation de GunDB et de la clé de synchronisation
+  // Initialisation de Firebase et extraction de l'auto-configuration par URL
   initSync() {
     const urlParams = new URLSearchParams(window.location.search);
-    let syncKey = urlParams.get('sync');
+    const fbParam = urlParams.get('fb');
 
-    if (!syncKey) {
-      syncKey = localStorage.getItem('golden_caisse_sync_key');
-    }
-
-    if (!syncKey) {
-      // Générer une clé de synchronisation unique et robuste
-      syncKey = 'caisse-' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
-    }
-
-    localStorage.setItem('golden_caisse_sync_key', syncKey);
-
-    // Mettre à jour l'URL sans recharger la page
-    urlParams.set('sync', syncKey);
-    const newUrl = window.location.pathname + '?' + urlParams.toString();
-    window.history.replaceState({}, '', newUrl);
-
-    this.syncKey = syncKey;
-
-    // Initialiser GunDB avec des relais publics
-    if (typeof Gun !== 'undefined') {
+    if (fbParam) {
       try {
-        this.gun = Gun({
-          peers: [
-            'https://gun-manhattan.herokuapp.com/gun',
-            'https://gun-sjc.herokuapp.com/gun'
-          ]
-        });
-        this.isCloudSync = true;
-        this.setupGunListener();
+        // Décoder la configuration Firebase depuis Base64
+        const decodedStr = atob(fbParam);
+        const parsedConfig = JSON.parse(decodedStr);
+        // Enregistrer dans le cache local
+        localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(parsedConfig));
+
+        // Nettoyer l'URL pour la rendre propre (retrait du paramètre de config)
+        urlParams.delete('fb');
+        const cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, '', cleanUrl);
       } catch (e) {
-        console.error("Erreur lors de l'initialisation de GunDB :", e);
+        console.error("Erreur lors du décodage Base64 de la configuration Firebase :", e);
+      }
+    }
+
+    const configStr = localStorage.getItem(FIREBASE_CONFIG_KEY);
+    if (!configStr) {
+      this.isCloudSync = false;
+      return;
+    }
+
+    try {
+      const config = JSON.parse(configStr);
+      if (typeof firebase !== 'undefined') {
+        if (firebase.apps.length === 0) {
+          this.firebaseApp = firebase.initializeApp(config);
+        } else {
+          this.firebaseApp = firebase.app();
+        }
+        this.firebaseDb = firebase.database();
+        this.isCloudSync = true;
+        this.setupFirebaseListener();
+      } else {
+        console.warn("Le SDK Firebase n'est pas disponible.");
         this.isCloudSync = false;
       }
-    } else {
-      console.warn("GunDB n'est pas chargé sur cette page. Mode local uniquement.");
+    } catch (e) {
+      console.error("Erreur d'initialisation Firebase :", e);
       this.isCloudSync = false;
     }
   }
 
-  // Chiffrement AES-256 local
-  encrypt(data) {
-    try {
-      const plaintext = JSON.stringify(data);
-      return CryptoJS.AES.encrypt(plaintext, this.syncKey).toString();
-    } catch (e) {
-      console.error("Erreur lors du chiffrement AES-256 :", e);
-      return null;
-    }
-  }
+  // Configuration de l'écouteur en temps réel Firebase
+  setupFirebaseListener() {
+    if (!this.isCloudSync || !this.firebaseDb) return;
 
-  // Déchiffrement AES-256 local
-  decrypt(ciphertext) {
-    if (!ciphertext) return null;
-    try {
-      const bytes = CryptoJS.AES.decrypt(ciphertext, this.syncKey);
-      const plaintext = bytes.toString(CryptoJS.enc.Utf8);
-      if (!plaintext) return null;
-      return JSON.parse(plaintext);
-    } catch (e) {
-      console.error("Erreur lors du déchiffrement (clé invalide ou données corrompues) :", e);
-      return null;
-    }
-  }
-
-  // Configuration de l'écouteur de synchronisation GunDB
-  setupGunListener() {
-    if (!this.isCloudSync || !this.gun) return;
-
-    // Hash de la clé de synchro pour masquer le nom réel du nœud sur le réseau public
-    const nodeName = 'caisse_node_' + CryptoJS.SHA256(this.syncKey).toString();
-    this.gunNode = this.gun.get(nodeName);
-
-    this.gunNode.on((data) => {
-      if (data && data.payload) {
-        const decrypted = this.decrypt(data.payload);
-        if (decrypted) {
-          const localDataStr = localStorage.getItem(DB_KEY);
-          if (localDataStr !== JSON.stringify(decrypted)) {
-            localStorage.setItem(DB_KEY, JSON.stringify(decrypted));
-            // Notifier les écouteurs locaux pour rafraîchir l'interface
-            this.listeners.forEach(callback => callback(decrypted));
-          }
+    const ref = this.firebaseDb.ref('golden_caisse_db');
+    ref.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const localDataStr = localStorage.getItem(DB_KEY);
+        if (localDataStr !== JSON.stringify(data)) {
+          localStorage.setItem(DB_KEY, JSON.stringify(data));
+          // Notifier les écouteurs locaux pour rafraîchir l'interface
+          this.listeners.forEach(callback => callback(data));
+        }
+      } else {
+        // Premier branchement sur Firebase vide : on pousse les données locales actuelles
+        const localData = this.get();
+        if (localData) {
+          ref.set(localData);
+        } else {
+          ref.set(DEFAULT_DB);
         }
       }
+    }, (error) => {
+      console.error("Erreur de synchronisation Firebase (vérifiez vos règles de sécurité) :", error);
     });
   }
 
-  // Méthode de secours pour compatibilité (au cas où d'autres composants s'y abonnent)
+  // Enregistrer ou modifier la configuration Firebase
   setFirebaseConfig(configObj) {
-    console.log("Firebase n'est plus utilisé. Passage automatique en GunDB.");
+    localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(configObj));
+    
+    if (typeof firebase !== 'undefined') {
+      const restart = () => {
+        this.initSync();
+        // Une fois réinitialisé, pousser les données locales dans le nouveau projet Cloud
+        if (this.isCloudSync && this.firebaseDb) {
+          this.firebaseDb.ref('golden_caisse_db').set(this.get());
+        }
+      };
+
+      if (firebase.apps.length > 0) {
+        firebase.app().delete().then(restart).catch(() => {
+          this.initSync();
+        });
+      } else {
+        restart();
+      }
+    }
   }
 
+  // Désactiver la synchronisation Firebase
   removeFirebaseConfig() {
-    console.log("Firebase n'est plus utilisé. Désactivation de la clé de synchronisation.");
-    // Réinitialiser la clé locale pour forcer la regénération au prochain démarrage local si désiré
-    localStorage.removeItem('golden_caisse_sync_key');
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.delete('sync');
-    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-    window.history.replaceState({}, '', newUrl);
-    this.initSync();
+    if (this.firebaseDb) {
+      this.firebaseDb.ref('golden_caisse_db').off();
+    }
+    localStorage.removeItem(FIREBASE_CONFIG_KEY);
+    this.isCloudSync = false;
+    
+    const unregister = () => {
+      this.firebaseApp = null;
+      this.firebaseDb = null;
+      this.listeners.forEach(callback => callback(this.get()));
+    };
+
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+      firebase.app().delete().then(unregister).catch(unregister);
+    } else {
+      unregister();
+    }
   }
 
   // S'abonner aux changements de la base de données
@@ -195,7 +207,7 @@ class GoldenCaisseDatabase {
   // Écouteur pour la synchronisation inter-onglets (fallback local)
   setupStorageListener() {
     window.addEventListener('storage', (event) => {
-      if (event.key === DB_KEY) {
+      if (event.key === DB_KEY && !this.isCloudSync) {
         this.listeners.forEach(callback => callback(this.get()));
       }
     });
@@ -212,12 +224,11 @@ class GoldenCaisseDatabase {
     // 1. Sauvegarde locale (cache)
     localStorage.setItem(DB_KEY, JSON.stringify(data));
     
-    // 2. Sauvegarde Cloud si connecté via GunDB
-    if (this.isCloudSync && this.gunNode) {
-      const encryptedPayload = this.encrypt(data);
-      if (encryptedPayload) {
-        this.gunNode.put({ payload: encryptedPayload, timestamp: Date.now() });
-      }
+    // 2. Sauvegarde Cloud Firebase si connecté
+    if (this.isCloudSync && this.firebaseDb) {
+      this.firebaseDb.ref('golden_caisse_db').set(data).catch(err => {
+        console.error("Erreur d'écriture Cloud Firebase :", err);
+      });
     }
     
     // 3. Notifier les écouteurs locaux

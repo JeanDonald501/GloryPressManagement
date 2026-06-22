@@ -1802,10 +1802,28 @@ function updateCloudStatusIndicator() {
 }
 
 function shareAccessLink() {
-  const url = window.location.href;
+  const configStr = localStorage.getItem('firebase_config');
+  if (!configStr) {
+    alert("Aucune configuration Cloud active.\nVeuillez d'abord configurer Firebase dans l'onglet Paramètres (accès RAF) avant de pouvoir partager l'accès.");
+    return;
+  }
+
+  let encodedConfig;
+  try {
+    // Encoder la configuration JSON en Base64
+    encodedConfig = btoa(configStr);
+  } catch (e) {
+    console.error("Erreur d'encodage de la config Firebase :", e);
+    alert("Erreur lors de la préparation du lien de partage.");
+    return;
+  }
+
+  // Fabriquer l'URL de partage avec le paramètre fb contenant la config
+  const url = window.location.origin + window.location.pathname + '?fb=' + encodedConfig;
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(() => {
-      alert("Lien d'accès partagé copié dans le presse-papiers !\nPartagez-le avec vos collaborateurs pour une synchronisation en direct.");
+      alert("Lien d'accès partagé copié dans le presse-papiers !\nEnvoyez-le à vos collaborateurs. La connexion et la synchronisation de leur appareil se feront automatiquement dès qu'ils cliqueront sur le lien.");
     }).catch(err => {
       fallbackCopyText(url);
     });
@@ -1823,22 +1841,39 @@ function fallbackCopyText(text) {
   textarea.select();
   try {
     document.execCommand('copy');
-    alert("Lien d'accès partagé copié dans le presse-papiers !\nPartagez-le avec vos collaborateurs pour une synchronisation en direct.");
+    alert("Lien d'accès partagé copié dans le presse-papiers !\nEnvoyez-le à vos collaborateurs. La connexion et la synchronisation de leur appareil se feront automatiquement dès qu'ils cliqueront sur le lien.");
   } catch (err) {
     console.error("Impossible de copier", err);
-    alert("Impossible de copier le lien automatiquement. Veuillez copier l'adresse URL de votre navigateur.");
+    alert("Impossible de copier le lien automatiquement. Veuillez copier manuellement l'adresse URL suivante :\n\n" + text);
   }
   document.body.removeChild(textarea);
 }
 
-// Méthodes de secours pour éviter les erreurs de liaison événementielle
+// Enregistrer la configuration Firebase depuis les paramètres RAF
 function handleFirebaseUpdateSubmit() {
-  console.log("Firebase obsolète.");
+  const configStr = document.getElementById('settings-firebase-config').value.trim();
+  if (!configStr) {
+    alert("Veuillez coller une configuration JSON Firebase valide ou cliquer sur Déconnecter.");
+    return;
+  }
+  try {
+    const config = JSON.parse(configStr);
+    db.setFirebaseConfig(config);
+    updateCloudStatusIndicator();
+    alert("Configuration Firebase enregistrée avec succès. L'application est maintenant connectée au Cloud !");
+    updateUI(db.get());
+  } catch (e) {
+    alert("Erreur : La configuration n'est pas au format JSON valide. Veuillez copier-coller l'objet de configuration JSON directement.");
+  }
 }
 
+// Déconnecter Firebase
 function handleFirebaseDisconnect() {
-  if (confirm("Voulez-vous vraiment réinitialiser la clé de synchronisation ? Vos appareils devront utiliser le nouveau lien généré.")) {
+  if (confirm("Voulez-vous vraiment déconnecter l'application du Cloud ? Elle fonctionnera à nouveau de façon locale.")) {
     db.removeFirebaseConfig();
-    alert("Clé de synchronisation réinitialisée.");
+    document.getElementById('settings-firebase-config').value = '';
+    updateCloudStatusIndicator();
+    alert("Déconnexion réussie. Mode local réactivé.");
+    updateUI(db.get());
   }
 }
