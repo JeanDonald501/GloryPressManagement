@@ -201,11 +201,17 @@
         </div>
       </aside>
 
+      <!-- Sidebar Overlay pour mobile -->
+      <div class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
       <!-- MAIN VIEWPORT -->
       <main class="main-viewport">
         
         <!-- TOPBAR HEADER -->
         <header class="top-header">
+          <button onclick="toggleMobileSidebar()" class="btn-menu-toggle" id="btn-menu-toggle">
+            <i class="fa-solid fa-bars"></i>
+          </button>
           <div class="page-title-wrap">
             <h1 id="view-title">Titre de la vue</h1>
             <p id="view-subtitle">Sous-titre de la vue</p>

@@ -225,6 +225,12 @@ function switchView(viewId) {
 
   // Rafraîchir les données de la vue
   updateUI(db.get());
+
+  // Sur mobile, fermer la barre latérale après changement de vue
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) {
+    sidebar.classList.remove('active');
+  }
 }
 
 // Mettre à jour les titres de l'en-tête de la page
@@ -1875,5 +1881,13 @@ function handleFirebaseDisconnect() {
     updateCloudStatusIndicator();
     alert("Déconnexion réussie. Mode local réactivé.");
     updateUI(db.get());
+  }
+}
+
+// Basculer la visibilité du menu mobile
+function toggleMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) {
+    sidebar.classList.toggle('active');
   }
 }

@@ -1247,3 +1247,84 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* Design Responsif Mobile */
+@media (max-width: 992px) {
+  .sidebar {
+    left: -280px;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar.active {
+    left: 0;
+  }
+  .main-viewport {
+    margin-left: 0;
+    padding: 1.5rem 1.5rem 5rem 1.5rem;
+  }
+  
+  /* Bouton hamburger toggle mobile */
+  .btn-menu-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    margin-right: 1rem;
+  }
+  .btn-menu-toggle:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  
+  .top-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: flex-start;
+  }
+  .header-actions {
+    margin-left: auto;
+  }
+  
+  /* Overlay */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    z-index: 9;
+  }
+  .sidebar.active ~ .sidebar-overlay {
+    display: block;
+  }
+  
+  /* Layout des grilles sur petit écran */
+  .caisse-overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .table-search-filters {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+}
+
+/* Cacher le bouton toggle sur grand écran */
+@media (min-width: 993px) {
+  .btn-menu-toggle {
+    display: none !important;
+  }
+}
