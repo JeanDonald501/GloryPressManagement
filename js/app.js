@@ -172,16 +172,20 @@ function showMainApp() {
   const profileRole = document.getElementById('profile-role');
   const userAvatar = document.getElementById('user-avatar');
 
-  profileName.textContent = currentUser.name;
-  profileRole.textContent = currentUser.role === 'raf' ? 'RAF - Administrateur' : 'Caissière';
-  userAvatar.textContent = currentUser.name.charAt(0).toUpperCase();
+  // Sécurisation de l'accès au nom d'utilisateur
+  const displayName = currentUser && (currentUser.name || currentUser.username || "Utilisateur");
+  const displayRole = currentUser && currentUser.role;
 
-  if (currentUser.role === 'raf') {
-    navRaf.style.display = 'flex';
-    navCaissiere.style.display = 'none';
+  if (profileName) profileName.textContent = displayName;
+  if (profileRole) profileRole.textContent = displayRole === 'raf' ? 'RAF - Administrateur' : 'Caissière';
+  if (userAvatar) userAvatar.textContent = displayName.charAt(0).toUpperCase();
+
+  if (displayRole === 'raf') {
+    if (navRaf) navRaf.style.display = 'flex';
+    if (navCaissiere) navCaissiere.style.display = 'none';
   } else {
-    navCaissiere.style.display = 'flex';
-    navRaf.style.display = 'none';
+    if (navCaissiere) navCaissiere.style.display = 'flex';
+    if (navRaf) navRaf.style.display = 'none';
   }
 
   // Mettre à jour l'UI avec les données
